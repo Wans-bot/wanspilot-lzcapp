@@ -1,0 +1,97 @@
+package: cloud.lazycat.app.wanspilot
+version: 1.0.0-25
+name: WansPilot
+description: 自托管的影视搜索与订阅下载工具：填写自己的 TMDB Key 即可浏览影视墙、搜索电影电视剧动漫，订阅后自动检测更新并下载到懒猫网盘。
+author: wans
+license: MIT
+homepage: https://github.com/wans/wanspilot
+min_os_version: 1.5.0
+permissions:
+  required:
+    - net.internet
+    - document.private
+locales:
+  zh-CN:
+    name: WansPilot
+    description: 自托管的影视搜索与订阅下载工具：填写自己的 TMDB Key 即可浏览影视墙、搜索电影电视剧动漫，订阅后自动检测更新并下载到懒猫网盘。
+    usage: |
+      WansPilot 是一个自托管的影视搜索与订阅下载工具。它用你自己的 TMDB Key 拉取影视资料与海报，
+      用公开的种子索引站搜索资源，内置下载引擎把影片下载到你指定的懒猫网盘目录。
+
+      首次使用：
+
+      1. 打开应用，进入「设置」，填写你自己的 TMDB API Key（在 themoviedb.org 免费注册后
+         于「设置 → API」页面获取，形如 32 位十六进制字符串）。不填 Key 时除影视墙与搜索外的
+         功能仍可使用。
+      2. 同一页面可选择下载目录，默认是网盘里的「下载/wanspilot」。
+      3. 若你的网络访问不了 TMDB，可在「设置」里改「TMDB 接口地址」与「TMDB 图片地址」，
+         或填写「网络代理」地址。
+
+      日常使用：
+
+      - 影视墙：首页按电影 / 电视剧 / 动漫分类展示热门与最新内容，点海报进入详情。
+      - 搜索：右上角搜索框输入片名，或用「类型 / 风格 / 语种 / 年份 / 评分 / 排序」筛选。
+      - 找资源：把鼠标移到海报上，点海报上的搜索图标进入资源列表，选一个种子加入下载，
+        进度显示在「任务」页。
+      - 订阅：把鼠标移到海报上点订阅图标即可订阅（按设置里的默认清晰度与体积上限，剧集默认追全部季），
+        也可以在影片详情页点「订阅」，逐个选择季与画质偏好。之后系统会定期检查更新，
+        发现新剧集时自动搜索并下载。
+      - 订阅页：只列自己订阅了什么，顶部按「电影 / 剧集」两档分开看；每张订阅是一张海报，
+        右键（触屏点海报右上角的三个点）出菜单：立即检查 / 编辑 / 暂停 / 删除。
+      - 日历页：只放更新日历，按月历方格排；每天更新哪些直接以海报出现在日期框里，
+        海报角标写第几集，绿框是已下载、红框是漏掉的；点海报进详情页。
+      - 导入：也可以在「任务」页粘贴磁力链接，或从懒猫网盘、本地选择 .torrent 文件导入。
+      - 导出：订阅列表可导出为 JSON 文件保存到懒猫网盘。
+
+      说明：
+
+      - 设置、订阅与任务记录保存在微服本机，重启与升级不丢失。
+      - 下载的影片保存到你选择的懒猫网盘目录，可在网盘的文件管理里查看。
+      - 本应用不提供任何影视内容，只做资料聚合、资源索引与下载调度；请自行确认下载内容的合法性。
+  en-US:
+    name: WansPilot
+    description: A self-hosted media search and subscription downloader. Use your own TMDB key to browse a poster wall, search movies, TV shows and anime, then subscribe and let it fetch new episodes automatically to your LazyCat cloud drive.
+    usage: |
+      WansPilot is a self-hosted media search and subscription downloader. It uses your own
+      TMDB API key for metadata and posters, public torrent indexers for resources, and a
+      built-in download engine that saves files into a folder of your LazyCat cloud drive.
+
+      Getting started:
+
+      1. Open the app, go to Settings and enter your own TMDB API key (register for free at
+         themoviedb.org, then find it under Settings -> API; it is a 32-character hex string).
+         Without a key, everything except the poster wall and search still works.
+      2. On the same page, choose the download folder. The default is the cloud drive folder
+         "Downloads/wanspilot".
+      3. If your network cannot reach TMDB, change the TMDB API base URL and TMDB image base
+         URL in Settings, or fill in a network proxy.
+
+      Daily use:
+
+      - Poster wall: the home page lists popular and recent titles by Movies / TV / Anime.
+        Click a poster to open its detail page.
+      - Search: use the search box at the top right, or filter by type, genre, language, year,
+        rating and sort order.
+      - Find resources: hover a poster and click the search icon to open the resource list,
+        then add a torrent; progress appears on Tasks.
+      - Subscribe: hover a poster and click the bookmark icon to subscribe with the defaults
+        from Settings (TV shows follow every season), or open a title page and choose the
+        seasons and quality there. The app then polls for updates and downloads new episodes.
+      - Subscriptions page: lists only what you subscribed, split into Movies and TV with counts.
+        Each subscription is a poster; right-click it (or use the three-dot button on touch
+        devices) to open a menu with check now / edit / pause / remove.
+      - Calendar page: holds the update calendar on its own, laid out as a month grid; each
+        day's episodes appear as posters inside the day box, with an S02E03 badge and a green
+        or red frame for downloaded or missing. Click a poster to open its detail page.
+      - Import: paste a magnet link on the Tasks page, or pick a .torrent from the cloud drive
+        or your local machine.
+      - Export: subscriptions can be exported as a JSON file into your cloud drive.
+
+      Notes:
+
+      - Settings, subscriptions and task history are stored on your own microserver and
+        survive restarts and upgrades.
+      - Downloaded files are saved into the cloud drive folder you choose and can be managed
+        in the cloud drive file manager.
+      - This app provides no media content of its own. It only aggregates metadata, indexes
+        public resources and schedules downloads. Check the legality of what you download.

@@ -1,0 +1,125 @@
+# wanspilot · 懒猫 LPK V2 运行清单
+#
+# 形态：单服务自研应用。运行时用官方已中转的 node:22-bookworm-slim 镜像，
+# 业务代码随 contentdir 进入容器（/lzcapp/pkg/content），由 entry.sh 启动。
+# 不自建镜像：本环境盒子侧 build-pack 缺 /dev/fuse，无法构建镜像（见实测记录）。
+#
+# 网盘接入（评审强制项）：
+# 1. lazycat-file-bridge（request）：同源桥，让「保存到网盘」在他人共享目录下
+#    也能按 owner 切目录。照抄官方《自动拦截文件选择器》专题。
+# 2. open-save-chooser（browser）：官方文件选择器脚本，接管
+#    showOpenFilePicker / <input type=file> / 带 download 的 blob 链接。
+# 3. file_handler：网盘右键「用 wanspilot 打开」.torrent 文件。
+application:
+  subdomain: wanspilot
+  multi_instance: true
+  upstreams:
+    - location: /
+      # 用短服务名：实测 <服务>.<包名>.lzcapp 这种长域名在本环境解析不到，
+      # 而同一 compose 网络内的短服务名可以解析。
+      backend: http://wanspilot:3000
+      disable_trim_location: true
+  health_check:
+    test_url: http://wanspilot:3000/api/health
+    start_period: 90s
+    timeout: 10s
+  file_handler:
+    mime:
+      - x-lzc-extension/torrent
+    actions:
+      open: /?lzcOpenFile=%u
+  injects:
+    # ── 网盘同源文件桥（request 阶段，官方专题原文）────────────────────────
+    - id: lazycat-file-bridge
+      'on': request
+      auth_required: false
+      when:
+        - /__lazycat_file_bridge/*
+      do:
+        - src: |
+            const bridgePrefix = "/__lazycat_file_bridge";
+            const requestHost = String(ctx.request.host || "").split(":")[0].toLowerCase();
+            const firstDot = requestHost.indexOf(".");
+            const method = String(ctx.request.method || "").toUpperCase();
+
+            if (firstDot <= 0 || !requestHost.endsWith(".heiyu.space") ||
+                !["GET", "HEAD", "PUT"].includes(method)) {
+              ctx.response.send(["GET", "HEAD", "PUT"].includes(method) ? 400 : 405,
+                "Invalid LazyCat file bridge request");
+              return;
+            }
+
+            const boxDomain = requestHost.slice(firstDot + 1);
+            const fileOrigin = "https://file." + boxDomain;
+            const targetPath = "/files/home" + ctx.request.path.slice(bridgePrefix.length);
+
+            ctx.headers.del("Origin");
+            ctx.headers.del("Referer");
+            ctx.proxy.to(fileOrigin, {
+              path: targetPath,
+              query: ctx.request.raw_query,
+              use_target_host: true,
+              timeout_ms: 120000,
+              on_fail: "error",
+            });
+    # ── HTML 缓存修正：上游是自研页面，静态资源带 ETag 会让客户端 304 复用旧页，
+    #    导致平台注入不生效。request 去条件头，response 输出 no-store。──────
+    - id: wm-strip-conditional-headers
+      'on': request
+      auth_required: false
+      when:
+        - /*
+      do: |
+        var accept = String(ctx.headers.get("Accept") || "");
+        if (accept.indexOf("text/html") < 0) return;
+        ctx.headers.del("If-None-Match");
+        ctx.headers.del("If-Modified-Since");
+    - id: wm-html-no-store
+      'on': response
+      auth_required: false
+      when:
+        - /*
+      do: |
+        if (ctx.status !== 200) return;
+        var ct = String(ctx.headers.get("Content-Type") || "");
+        if (ct.indexOf("text/html") < 0) return;
+        ctx.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+        ctx.headers.del("ETag");
+        ctx.headers.del("Last-Modified");
+    # ── 官方网盘文件选择器（browser 阶段）──────────────────────────────────
+    - id: open-save-chooser
+      'on': browser
+      auth_required: false
+      when:
+        - /*
+      do:
+        - src: file:///lzcapp/pkg/content/lazycat-injects/lzc-file-chooser-inject.js
+          params:
+            diskRoot: /_lzc/files/home
+            fileBridgeRoot: /__lazycat_file_bridge
+            locale: auto
+            hooks:
+              fileSystemAccess: true
+              fileInput: true
+              downloadAnchor: true
+services:
+  wanspilot:
+    image: registry.lazycat.cloud/wans/library/node:3bb1dfb9669da50b
+    binds:
+      # 应用数据：设置、订阅、任务记录、种子状态。卸载勾选清理数据才会删除。
+      - /lzcapp/var/wanspilot:/data
+      # 用户文稿：下载的影片直接落到当前实例用户的网盘目录。
+      - /lzcapp/documents/{{ .S.DeployUID }}:/downloads
+      - /lzcapp/cache/wanspilot:/cache
+    environment:
+      - WP_DATA_DIR=/data
+      - WP_DOWNLOAD_DIR=/downloads
+      - TZ=Asia/Shanghai
+    entrypoint: /bin/sh /lzcapp/pkg/content/entry.sh
+    healthcheck:
+      test: [CMD-SHELL, "node -e \"require('http').get('http://127.0.0.1:3000/api/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\""]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      # 首次启动要建立数据目录与索引，给足启动期。
+      start_period: 60s

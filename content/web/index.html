@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>WansPilot · 影视墙</title>
+  <link rel="icon" type="image/png" href="./logo-mark.png">
+  <script>
+    // 首屏前先套用本地缓存的主题，避免从白闪到黑；真正的值在 boot() 里跟服务端设置对齐。
+    (function () {
+      try {
+        var saved = localStorage.getItem('wanspilot.theme');
+        if (saved !== 'light' && saved !== 'dark') {
+          saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', saved);
+        document.documentElement.setAttribute('data-theme-pref', saved);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.setAttribute('data-theme-pref', 'dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./opening.css">
+</head>
+<body>
+  <div class="opening" id="opening" aria-label="WansPilot 启动动画">
+    <canvas class="opening__stars" id="openingStars" aria-hidden="true"></canvas>
+    <div class="opening__frame">
+      <div class="opening__stage" aria-hidden="true">
+        <span class="opening__halo"></span>
+        <span class="opening__ring opening__ring--a"></span>
+        <span class="opening__ring opening__ring--b"></span>
+        <span class="opening__beam opening__beam--one"></span>
+        <span class="opening__beam opening__beam--two"></span>
+        <span class="opening__mark">
+          <img src="./opening-mark.png" alt="">
+          <span class="opening__sheen"></span>
+        </span>
+        <span class="opening__lines"><i></i><i></i><i></i></span>
+        <span class="opening__word">
+          <img src="./opening-wordmark.png" alt="WansPilot">
+          <span class="opening__glow"></span>
+        </span>
+        <p class="opening__tagline">电影 · 电视 · 一站检索</p>
+      </div>
+    </div>
+  </div>
+
+  <a class="skip-link" href="#view">跳到主要内容</a>
+
+  <header class="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="#/home">
+        <img class="brand__logo" src="./logo.png" alt="" width="34" height="34">
+        <span class="brand__text">WansPilot</span>
+      </a>
+
+      <nav class="nav" aria-label="主导航">
+        <a class="nav__item" data-nav="home" href="#/home">
+          <span class="nav__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+          <span class="nav__label">影视墙</span>
+        </a>
+        <a class="nav__item" data-nav="search" href="#/search">
+          <span class="nav__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg></span>
+          <span class="nav__label">搜索</span>
+        </a>
+        <a class="nav__item" data-nav="subscribe" href="#/subscribe">
+          <span class="nav__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
+          <span class="nav__label">订阅</span>
+        </a>
+        <a class="nav__item" data-nav="calendar" href="#/calendar">
+          <span class="nav__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg></span>
+          <span class="nav__label">日历</span>
+        </a>
+        <a class="nav__item" data-nav="tasks" href="#/tasks">
+          <span class="nav__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg></span>
+          <span class="nav__label">任务</span>
+        </a>
+      </nav>
+
+      <div class="topbar__tools">
+        <button type="button" class="themebtn" data-action="theme-toggle" role="switch"
+          aria-checked="false" aria-label="切换白天与夜间主题">
+          <span class="themebtn__track">
+            <span class="themebtn__side" data-side="light" aria-hidden="true"></span>
+            <span class="themebtn__side" data-side="dark" aria-hidden="true"></span>
+            <span class="themebtn__thumb" aria-hidden="true"></span>
+          </span>
+        </button>
+        <a class="nav__item" data-nav="settings" href="#/settings" aria-label="设置">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="nav__label">设置</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div id="view" class="view"></div>
+  </main>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <div id="modal-root" class="modal-root" hidden></div>
+  <div id="picker-host" class="picker-host" hidden></div>
+
+  <script src="./vendor/lzc-file-pickers.umd.js"></script>
+  <script src="./opening.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

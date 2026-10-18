@@ -1,0 +1,11 @@
+{
+  "name": "wanspilot-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "wanspilot backend runtime dependencies (shipped inside the LPK content dir)",
+  "dependencies": {
+    "undici": "^7.16.0",
+    "webtorrent": "^1.9.7"
+  }
+}
