@@ -30,15 +30,15 @@ jobs:
           list() { curl -sS -H "Authorization: Bearer $TOKEN" "$API/app/list?size=200"; }
           if [ "$OP" = "list" ]; then
             list > /tmp/apps.json
-            echo "--- total:"; jq '(.data.total // .total // "?")' /tmp/apps.json
-            jq -c '(.data.list // .data // .)[]? | {id, package, status}' /tmp/apps.json | head -400
+            echo "--- raw head:"; head -c 1200 /tmp/apps.json; echo
+            echo "--- apps:"; jq -c '[.. | objects | select(has("package"))] | .[] | {id, package, status}' /tmp/apps.json | head -400
             exit 0
           fi
           list > /tmp/apps.json
           IFS=',' read -ra WANT <<< "$PKG"
           for w in "${WANT[@]}"; do
             w=$(echo "$w" | xargs); [ -z "$w" ] && continue
-            ids=$(jq -r --arg w "$w" '(.data.list // .data // .)[]? | select(.package==$w or (.id|tostring)==$w) | .id' /tmp/apps.json)
+            ids=$(jq -r --arg w "$w" '[.. | objects | select(has("package")) | select(.package==$w or (.id|tostring)==$w) | .id] | .[]' /tmp/apps.json)
             echo "### $w -> matched ids: $(echo $ids | tr '\n' ' ')"
             for id in $ids; do
               if [ "$DRY" = "true" ]; then
