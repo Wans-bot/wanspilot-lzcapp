@@ -27,7 +27,7 @@ jobs:
         run: |
           set -uo pipefail
           API=https://appstore.api.lazycat.cloud/api/v3/developer
-          list() { curl -sS -H "Authorization: Bearer $TOKEN" "$API/app?page=1&page_size=500"; }
+          list() { curl -sS -H "Authorization: Bearer $TOKEN" "$API/app/list?size=200"; }
           if [ "$OP" = "list" ]; then
             list > /tmp/apps.json
             echo "--- total:"; jq '(.data.total // .total // "?")' /tmp/apps.json
