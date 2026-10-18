@@ -33,6 +33,18 @@ jobs:
           echo "list bytes=$(wc -c < /tmp/apps.json) total=$(jq -r '.total // .count // "?"' /tmp/apps.json 2>/dev/null) items=$(jq -r '(.items//.list//.)|length' /tmp/apps.json 2>/dev/null)"
           IFS=',' read -ra WANT <<< "$PKG"
           case "$OP" in
+            diag)
+              echo "top keys: $(jq -c 'keys' /tmp/apps.json)"
+              echo "item0 keys: $(jq -c '(.items//.list//.)[0]|keys' /tmp/apps.json)"
+              echo "--- grep new app names in list:"
+              grep -o 'cloud\.lazycat\.app\.\(bambuddy1\|evcc1\|slskd\|wanspilot\|wavelog\|xzs\)' /tmp/apps.json | sort -u || echo "(none)"
+              echo "--- try page2 / size100:"
+              for q in "app/list?size=100" "app/list?size=100&page=2" "app/list?page=0&size=50"; do
+                n=$(cur "$API/$q" | jq -r '(.items//.list//.)|length' 2>/dev/null)
+                t=$(cur "$API/$q" | jq -r '.total // "?"' 2>/dev/null)
+                echo "  $q -> items=$n total=$t"
+              done
+              ;;
             raw)
               for w in "${WANT[@]}"; do
                 w=$(echo "$w" | xargs); [ -z "$w" ] && continue
