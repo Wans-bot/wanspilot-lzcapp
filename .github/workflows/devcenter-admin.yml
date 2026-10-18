@@ -33,6 +33,12 @@ jobs:
           echo "list bytes=$(wc -c < /tmp/apps.json) total=$(jq -r '.total // .count // "?"' /tmp/apps.json 2>/dev/null) items=$(jq -r '(.items//.list//.)|length' /tmp/apps.json 2>/dev/null)"
           IFS=',' read -ra WANT <<< "$PKG"
           case "$OP" in
+            raw)
+              for w in "${WANT[@]}"; do
+                w=$(echo "$w" | xargs); [ -z "$w" ] && continue
+                echo "=== $w"; cur "$API/$w" | head -c 3000; echo
+              done
+              ;;
             list)
               jq -r '(.items // .list // .) | .[] | "\(.id)\t\(.package)\treview=\(.review.status // "-")\t\(.status // "-")"' /tmp/apps.json | sort -t$'\t' -k2
               ;;
