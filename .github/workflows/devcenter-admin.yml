@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       op:
-        description: 'list | delete'
+        description: 'list | probe | delete'
         required: true
-        default: 'list'
+        default: 'probe'
       package:
-        description: '包名或 app id（逗号分隔，delete 用）'
+        description: '包名或 app id（逗号分隔）'
         required: false
         default: ''
       dry_run:
@@ -28,23 +28,32 @@ jobs:
           set -uo pipefail
           API=https://appstore.api.lazycat.cloud/api/v3/developer
           H1="X-User-Token: $TOKEN"; H2="Cookie: userToken=$TOKEN"
-          list() { curl -sS -H "$H1" -H "$H2" "$API/app/list?size=200"; }
-          list > /tmp/apps.json
-          echo "--- bytes: $(wc -c < /tmp/apps.json)"
-          if [ "$OP" = "list" ]; then
-            jq -r '(.items // .list // .) | .[] | "\(.id)\t\(.package)\treview=\(.review.status // "-")"' /tmp/apps.json | sort -t$'\t' -k2 | head -400
-            exit 0
-          fi
+          cur() { curl -sS -H "$H1" -H "$H2" "$1"; }
+          cur "$API/app/list?size=200" > /tmp/apps.json
+          echo "list bytes=$(wc -c < /tmp/apps.json) total=$(jq -r '.total // .count // "?"' /tmp/apps.json 2>/dev/null) items=$(jq -r '(.items//.list//.)|length' /tmp/apps.json 2>/dev/null)"
           IFS=',' read -ra WANT <<< "$PKG"
-          for w in "${WANT[@]}"; do
-            w=$(echo "$w" | xargs); [ -z "$w" ] && continue
-            ids=$(jq -r --arg w "$w" '(.items // .list // .) | .[] | select(.package==$w or (.id|tostring)==$w) | .id' /tmp/apps.json)
-            echo "### $w -> ids: $(echo $ids | tr '\n' ' ')"
-            for id in $ids; do
-              if [ "$DRY" = "true" ]; then echo "DRY-RUN would delete $id"
-              else
-                code=$(curl -sS -o /tmp/del.json -w '%{http_code}' -X DELETE -H "$H1" -H "$H2" "$API/app/$id/remove")
-                echo "DELETE $id -> $code"; head -c 400 /tmp/del.json; echo
-              fi
-            done
-          done
+          case "$OP" in
+            list)
+              jq -r '(.items // .list // .) | .[] | "\(.id)\t\(.package)\treview=\(.review.status // "-")\t\(.status // "-")"' /tmp/apps.json | sort -t$'\t' -k2
+              ;;
+            probe)
+              for w in "${WANT[@]}"; do
+                w=$(echo "$w" | xargs); [ -z "$w" ] && continue
+                printf '%-42s exist=%s\n' "$w" "$(cur "$API/check/exist?package=$w" | head -c 200)"
+              done
+              ;;
+            delete)
+              for w in "${WANT[@]}"; do
+                w=$(echo "$w" | xargs); [ -z "$w" ] && continue
+                ids=$(jq -r --arg w "$w" '(.items // .list // .) | .[] | select(.package==$w or (.id|tostring)==$w) | .id' /tmp/apps.json)
+                echo "### $w -> ids: $(echo $ids | tr '\n' ' ')"
+                for id in $ids; do
+                  if [ "$DRY" = "true" ]; then echo "DRY-RUN would delete $id"
+                  else
+                    code=$(curl -sS -o /tmp/del.json -w '%{http_code}' -X DELETE -H "$H1" -H "$H2" "$API/app/$id/remove")
+                    echo "DELETE $id -> $code"; head -c 300 /tmp/del.json; echo
+                  fi
+                done
+              done
+              ;;
+          esac
