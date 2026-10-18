@@ -30,10 +30,19 @@ images:
 stores:
   official:
     enabled: true
-    skip_if_version_exists: true
-    create_if_missing: true
-    changelog_locales:
-      - zh-CN
-      - en-US
+    application:
+      brief: "BT 下载协作面板"
+      description: "WansPilot 管理 BT 下载任务：磁力与种子导入、进度与速度监控、任务分享，可直接从网盘中打开 .torrent 文件。"
+      keywords:
+        - "下载"
+        - "BT"
+        - "种子"
+        - "磁力"
+        - "任务管理"
+      support_pc: true
+      screenshot_pc_files:
+        - ".github/screenshots/pc-1.png"
+        - ".github/screenshots/pc-2.png"
+        - ".github/screenshots/pc-3.png"
   private:
     enabled: false
