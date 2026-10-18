@@ -22,6 +22,14 @@ stores:
   official:
     enabled: true
     create_if_missing: true
+    continue_if_newer_version: true
+    skip_if_version_exists: false
+    retry:
+      enabled: true
+      max_attempts: 4
+      initial_delay: 5s
+      max_delay: 60s
+      max_upload_timeout: 600s
     application:
       language: zh
       brief: "BT 下载协作面板"
