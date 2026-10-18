@@ -33,6 +33,13 @@ jobs:
           echo "list bytes=$(wc -c < /tmp/apps.json) total=$(jq -r '.total // .count // "?"' /tmp/apps.json 2>/dev/null) items=$(jq -r '(.items//.list//.)|length' /tmp/apps.json 2>/dev/null)"
           IFS=',' read -ra WANT <<< "$PKG"
           case "$OP" in
+            scan)
+              for id in $(seq "${PKG%%-*}" "${PKG##*-}"); do
+                body=$(cur "$API/app/$id")
+                pkg=$(echo "$body" | jq -r '.package // .data.package // empty' 2>/dev/null)
+                if [ -n "$pkg" ]; then echo "  $id -> $pkg"; fi
+              done
+              ;;
             diag)
               echo "top keys: $(jq -c 'keys' /tmp/apps.json)"
               echo "item0 keys: $(jq -c '(.items//.list//.)[0]|keys' /tmp/apps.json)"
