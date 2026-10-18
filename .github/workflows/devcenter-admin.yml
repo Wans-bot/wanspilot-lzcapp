@@ -27,25 +27,24 @@ jobs:
         run: |
           set -uo pipefail
           API=https://appstore.api.lazycat.cloud/api/v3/developer
-          list() { curl -sS -H "Authorization: Bearer $TOKEN" "$API/app/list?size=200"; }
+          H1="X-User-Token: $TOKEN"; H2="Cookie: userToken=$TOKEN"
+          list() { curl -sS -H "$H1" -H "$H2" "$API/app/list?size=200"; }
+          list > /tmp/apps.json
+          echo "--- bytes: $(wc -c < /tmp/apps.json)"
           if [ "$OP" = "list" ]; then
-            list > /tmp/apps.json
-            echo "--- raw head:"; head -c 1200 /tmp/apps.json; echo
-            echo "--- apps:"; jq -c '[.. | objects | select(has("package"))] | .[] | {id, package, status}' /tmp/apps.json | head -400
+            jq -r '(.items // .list // .) | .[] | "\(.id)\t\(.package)\treview=\(.review.status // "-")"' /tmp/apps.json | sort -t$'\t' -k2 | head -400
             exit 0
           fi
-          list > /tmp/apps.json
           IFS=',' read -ra WANT <<< "$PKG"
           for w in "${WANT[@]}"; do
             w=$(echo "$w" | xargs); [ -z "$w" ] && continue
-            ids=$(jq -r --arg w "$w" '[.. | objects | select(has("package")) | select(.package==$w or (.id|tostring)==$w) | .id] | .[]' /tmp/apps.json)
-            echo "### $w -> matched ids: $(echo $ids | tr '\n' ' ')"
+            ids=$(jq -r --arg w "$w" '(.items // .list // .) | .[] | select(.package==$w or (.id|tostring)==$w) | .id' /tmp/apps.json)
+            echo "### $w -> ids: $(echo $ids | tr '\n' ' ')"
             for id in $ids; do
-              if [ "$DRY" = "true" ]; then
-                echo "DRY-RUN skip delete $id"
+              if [ "$DRY" = "true" ]; then echo "DRY-RUN would delete $id"
               else
-                code=$(curl -sS -o /tmp/del.json -w '%{http_code}' -X DELETE -H "Authorization: Bearer $TOKEN" "$API/app/$id/remove")
-                echo "DELETE $id -> $code"; cat /tmp/del.json; echo
+                code=$(curl -sS -o /tmp/del.json -w '%{http_code}' -X DELETE -H "$H1" -H "$H2" "$API/app/$id/remove")
+                echo "DELETE $id -> $code"; head -c 400 /tmp/del.json; echo
               fi
             done
           done
