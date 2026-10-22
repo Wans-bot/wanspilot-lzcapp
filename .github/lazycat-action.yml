@@ -20,6 +20,9 @@ images: []
 
 stores:
   official:
+    changelog_locales:
+      - zh
+      - en
     enabled: true
     create_if_missing: true
     continue_if_newer_version: true
